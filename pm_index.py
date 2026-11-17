@@ -485,6 +485,11 @@ def _cod_sync_archive(dest, url, keep=False):
 
 
 # ---- source : CSD locale (API Python du CCDC, en sous-processus) -------------------------
+CSD_MISSING = ("Python du CCDC introuvable : donner --csd-python CHEMIN\n"
+               "  Windows : dir /s /b \"C:\\Program Files\\CCDC\\python.exe\" pour le trouver\n"
+               "  macOS   : ls ~/CCDC/*/csd-python-api/miniconda/bin/python")
+
+
 def find_csd_python(hint=None):
     cands = [hint] if hint else []
     cands += [os.environ.get("CSD_PYTHON", "")]
@@ -493,6 +498,13 @@ def find_csd_python(hint=None):
                 "CCDC/Python_API_*/miniconda/bin/python", "CCDC/**/miniconda/bin/python"):
         cands += sorted(glob.glob(os.path.join(home, pat), recursive=True))
     cands += sorted(glob.glob("/Applications/CCDC/**/miniconda/bin/python", recursive=True))
+    if os.name == "nt":   # Windows : python.exe est à la racine de miniconda (pas dans bin)
+        roots = [os.environ.get(k, "") for k in ("ProgramFiles", "ProgramFiles(x86)", "ProgramW6432", "LOCALAPPDATA", "APPDATA")]
+        roots += [home, "C:\\"]
+        for root in filter(None, roots):
+            for pat in ("CCDC/ccdc-software/csd-python-api/miniconda/python.exe", "CCDC/*/csd-python-api/miniconda/python.exe",
+                        "CCDC/Python_API_*/miniconda/python.exe", "CCDC/**/miniconda/python.exe"):
+                cands += sorted(glob.glob(os.path.join(root, pat), recursive=True), reverse=True)
     for c in cands:
         if c and os.path.isfile(c):
             return c
@@ -502,7 +514,7 @@ def find_csd_python(hint=None):
 def build_csd(con, csd_python, workers, limit=None, rebuild=False):
     py = find_csd_python(csd_python)
     if not py:
-        sys.exit("Python du CCDC introuvable : donner --csd-python CHEMIN")
+        sys.exit(CSD_MISSING)
     worker = os.path.join(HERE, "csd_pm_worker.py")
     print("[CSD] lecture de la liste des refcodes (%s)…" % py, flush=True)
     out = subprocess.run([py, worker, "list"], capture_output=True, text=True)
@@ -674,6 +686,15 @@ def open_in_mercury(cif_text, ident):
     if sys.platform == "darwin":
         subprocess.Popen(["open", path])
         return "Mercury introuvable dans ~/CCDC : CIF ouvert avec l'application par défaut (%s)" % path
+    if os.name == "nt":
+        exes = []
+        for root in filter(None, (os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.path.expanduser("~"))):
+            exes += glob.glob(os.path.join(root, "CCDC", "**", "mercury.exe"), recursive=True)
+        if exes:
+            subprocess.Popen([sorted(exes)[-1], path])
+            return "Ouvert dans Mercury : " + path
+        os.startfile(path)
+        return "Mercury introuvable : CIF ouvert avec l'application par défaut (%s)" % path
     return "Mercury introuvable ; CIF écrit ici : " + path
 
 
@@ -735,7 +756,7 @@ def main():
     ap.add_argument("--rebuild", action="store_true", help="avec --csd : recalculer toutes les entrées, y compris celles déjà dans l'index")
     a = ap.parse_args()
     if a.cmd == "bench":
-        py = find_csd_python(a.csd_python) or sys.exit("Python du CCDC introuvable : donner --csd-python CHEMIN")
+        py = find_csd_python(a.csd_python) or sys.exit(CSD_MISSING)
         subprocess.run([py, os.path.join(HERE, "csd_pm_worker.py"), "bench", str(a.limit or 300)])
         return
     con = open_db(a.db)

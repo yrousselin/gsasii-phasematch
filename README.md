@@ -69,7 +69,9 @@ PY EXP/pm_index.py stats
 
 `build` is **incremental**. You can stop it with Ctrl-C and run it again later. After a CSD or COD update, run the same commands again: only the new entries are added.
 
-If the CCDC's Python is not found, add `--csd-python /path/to/ccdc/python`.
+If the CCDC's Python is not found, add `--csd-python` followed by its path. Typical locations:
+- **Windows:** `"C:\Program Files\CCDC\ccdc-software\csd-python-api\miniconda\python.exe"` (to find it: `dir /s /b "C:\Program Files\CCDC\python.exe"`)
+- **macOS:** `~/CCDC/ccdc-software/csd-python-api/miniconda/bin/python`
 
 ### Step 3: restart GSAS-II
 

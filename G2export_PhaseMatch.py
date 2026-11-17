@@ -391,7 +391,10 @@ class ExportPhaseMatch(G2fil.ExportBaseclass):
         try:
             import pm_gpx
             if not os.path.exists(DEFAULT_DB):
-                wx.MessageBox("Index introuvable : %s\n\nLe construire une fois dans le Terminal :\n  cd ~/.GSASII/exports\n  caffeinate -i ~/g2main/bin/python pm_index.py build --csd" % DEFAULT_DB,
+                cmd = ('"%s" "%s" build --csd' % (sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pm_index.py"))
+                       if os.name == "nt" else
+                       "cd ~/.GSASII/exports\n  caffeinate -i %s pm_index.py build --csd" % sys.executable)
+                wx.MessageBox("Index introuvable : %s\n\nLe construire une fois dans un terminal :\n  %s" % (DEFAULT_DB, cmd),
                               "Recherche de phases", wx.OK | wx.ICON_WARNING, G2frame)
                 return
             pats = tree_patterns(G2frame)
