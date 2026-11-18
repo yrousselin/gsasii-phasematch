@@ -144,7 +144,12 @@ def build_cif_dir(con, root, source, workers, limit=None):
             todo.append((source, root, rel, stamp))
     if limit:
         todo = todo[:limit]
-    print("[%s] %d fichiers CIF, %d déjà dans l'index, %d à traiter" % (source, len(files), len(files) - len(todo), len(todo)))
+    present = {os.path.relpath(p, root) for p in files}
+    gone = [i for i in have if i not in present]
+    print("[%s] %d fichiers CIF, %d déjà dans l'index, %d à traiter%s" % (source, len(files), len(files) - len(todo), len(todo),
+          ", %d retirés (fichiers supprimés du dossier)" % len(gone) if gone and files else ""))
+    if gone and files:      # un CIF supprimé du dossier disparaît aussi de l'index (pas si le dossier est vide/absent)
+        con.executemany("DELETE FROM entries WHERE source=? AND ident=?", [(source, i) for i in gone])
     con.execute("INSERT OR REPLACE INTO meta VALUES (?,?)", ("root:" + source, root))
     con.commit()
     if not todo:

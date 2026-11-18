@@ -67,7 +67,7 @@ PY EXP/pm_index.py build --cod
 PY EXP/pm_index.py stats
 ```
 
-`build` is **incremental**. You can stop it with Ctrl-C and run it again later. After a CSD or COD update, run the same commands again: only the new entries are added.
+`build` is **incremental**. You can stop it with Ctrl-C and run it again later. For a folder of your own CIF files, running the same command again adds new or modified files and removes from the index those deleted from the folder. After a CSD or COD update, run the same commands again: only the new entries are added.
 
 If the CCDC's Python is not found, add `--csd-python` followed by its path. Typical locations:
 - **Windows:** `"C:\Program Files\CCDC\ccdc-software\csd-python-api\miniconda\python.exe"` (to find it: `dir /s /b "C:\Program Files\CCDC\python.exe"`)

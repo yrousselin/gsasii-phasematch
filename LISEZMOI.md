@@ -67,7 +67,7 @@ PY EXP/pm_index.py build --cod
 PY EXP/pm_index.py stats
 ```
 
-`build` est **incrémental**. Vous pouvez l'interrompre avec Ctrl-C et le relancer plus tard. Après une mise à jour de la CSD ou de la COD, relancez les mêmes commandes : seules les nouvelles entrées sont ajoutées.
+`build` est **incrémental**. Vous pouvez l'interrompre avec Ctrl-C et le relancer plus tard. Pour un dossier de CIF personnels, relancer la même commande ajoute les fichiers nouveaux ou modifiés et retire de l'index ceux qui ont été supprimés du dossier. Après une mise à jour de la CSD ou de la COD, relancez les mêmes commandes : seules les nouvelles entrées sont ajoutées.
 
 Si le Python du CCDC n'est pas trouvé, ajoutez `--csd-python` suivi de son chemin. Emplacements habituels :
 - **Windows :** `"C:\Program Files\CCDC\ccdc-software\csd-python-api\miniconda\python.exe"` (pour le trouver : `dir /s /b "C:\Program Files\CCDC\python.exe"`)
