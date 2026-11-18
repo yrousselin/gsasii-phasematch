@@ -22,6 +22,19 @@ for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+if os.name == "nt":
+    # Python de type conda lancé directement (sans « activation ») : les DLL de calcul de numpy (BLAS/LAPACK)
+    # sont dans <python>\Library\bin, qui n'est alors pas dans le PATH -> plantage 0xc06d007f dans numpy.linalg.
+    _pre = os.path.dirname(os.path.abspath(sys.executable))
+    _dirs = [d for d in (os.path.join(_pre, "Library", "mingw-w64", "bin"), os.path.join(_pre, "Library", "usr", "bin"),
+                         os.path.join(_pre, "Library", "bin"), os.path.join(_pre, "Scripts"), _pre) if os.path.isdir(d)]
+    _path = os.environ.get("PATH", "").split(os.pathsep)
+    os.environ["PATH"] = os.pathsep.join(_dirs + [d for d in _path if d not in _dirs])
+    for _d in _dirs:
+        try:
+            os.add_dll_directory(_d)
+        except (AttributeError, OSError):
+            pass
 import faulthandler
 faulthandler.enable()      # en cas de plantage brutal (aussi dans les processus de calcul), afficher où
 import numpy as np
