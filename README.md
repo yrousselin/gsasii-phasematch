@@ -73,6 +73,31 @@ If the CCDC's Python is not found, add `--csd-python` followed by its path. Typi
 - **Windows:** `"C:\Program Files\CCDC\ccdc-software\csd-python-api\miniconda\python.exe"` (to find it: `dir /s /b "C:\Program Files\CCDC\python.exe"`)
 - **macOS:** `~/CCDC/ccdc-software/csd-python-api/miniconda/bin/python`
 
+#### Full example on Windows
+
+Replace `<name>` with your Windows user name, and the `python.exe` path with your GSAS-II one (here `C:\ProgramData\gsas2main`). Open the **Command Prompt**:
+
+```
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<name>\.GSASII\exports\pm_index.py build --csd
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<name>\.GSASII\exports\pm_index.py cod-sync --archive
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<name>\.GSASII\exports\pm_index.py build --cod
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<name>\.GSASII\exports\pm_index.py stats
+```
+
+What to expect (COD, about 520,000 files):
+- `cod-sync --archive` downloads an archive of more than 10 GB, then extracts the CIF files into `C:\Users\<name>\COD\cif` (about 35 min of extraction). Allow several tens of GB of free space. If the download is interrupted, run the same command again: it resumes where it stopped.
+- `build --cod` shows its progress every 30 s, with an estimated time remaining. On a 12-core PC: about 120 structures per second, roughly 1 h 15 min.
+- Prevent the PC from going to sleep during these steps (Settings → System → Power).
+- Ctrl-C prints a long series of "KeyboardInterrupt" messages: this is normal, the work already done is kept.
+
+**To check an installation**, first run a small test into a separate index (a few seconds):
+```
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<name>\.GSASII\exports\pm_index.py build --cod --workers 1 --limit 300 --db C:\Users\<name>\test_cod.sqlite
+```
+It should end with "0 en erreur" (0 errors). Then delete `test_cod.sqlite`.
+
+**If the build is unusually slow**, or a line "ATTENTION : … processus de calcul ont planté" (worker processes crashed) appears, run the test above: it shows exactly where any crash happens. On Windows, a `0xc06d007f` error in numpy came from the numerical DLLs of the GSAS-II Python, which are not found when `python.exe` is run directly. `pm_index.py` now fixes this itself: make sure you have the latest version.
+
 ### Step 3: restart GSAS-II
 
 ## Usage

@@ -73,6 +73,31 @@ Si le Python du CCDC n'est pas trouvé, ajoutez `--csd-python` suivi de son chem
 - **Windows :** `"C:\Program Files\CCDC\ccdc-software\csd-python-api\miniconda\python.exe"` (pour le trouver : `dir /s /b "C:\Program Files\CCDC\python.exe"`)
 - **macOS :** `~/CCDC/ccdc-software/csd-python-api/miniconda/bin/python`
 
+#### Exemple complet sous Windows
+
+Remplacez `<nom>` par votre nom d'utilisateur Windows, et le chemin de `python.exe` par celui de votre GSAS-II (ici `C:\ProgramData\gsas2main`). Ouvrez l'**invite de commandes** :
+
+```
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<nom>\.GSASII\exports\pm_index.py build --csd
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<nom>\.GSASII\exports\pm_index.py cod-sync --archive
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<nom>\.GSASII\exports\pm_index.py build --cod
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<nom>\.GSASII\exports\pm_index.py stats
+```
+
+À quoi s'attendre (COD, environ 520 000 fichiers) :
+- `cod-sync --archive` télécharge une archive de plus de 10 Go, puis en extrait les CIF dans `C:\Users\<nom>\COD\cif` (environ 35 min d'extraction). Prévoyez plusieurs dizaines de Go libres. Si le téléchargement est coupé, relancez la même commande : il reprend où il s'était arrêté.
+- `build --cod` affiche son avancement toutes les 30 s, avec le temps restant estimé. Sur un PC à 12 cœurs : environ 120 structures par seconde, soit à peu près 1 h 15.
+- Empêchez la mise en veille pendant ces opérations (Paramètres → Système → Alimentation).
+- Ctrl-C affiche une longue suite de messages « KeyboardInterrupt » : c'est normal, ce qui est fait est conservé.
+
+**Pour vérifier une installation**, faites d'abord un petit essai dans un index séparé (quelques secondes) :
+```
+"C:\ProgramData\gsas2main\python.exe" C:\Users\<nom>\.GSASII\exports\pm_index.py build --cod --workers 1 --limit 300 --db C:\Users\<nom>\test_cod.sqlite
+```
+Il doit se terminer par « 0 en erreur ». Supprimez ensuite `test_cod.sqlite`.
+
+**Si la construction est anormalement lente**, ou si une ligne « ATTENTION : … processus de calcul ont planté » apparaît, relancez l'essai ci-dessus : il affiche l'endroit exact d'un éventuel plantage. Sous Windows, une erreur `0xc06d007f` dans numpy venait des DLL de calcul du Python de GSAS-II, introuvables quand on lance `python.exe` directement. `pm_index.py` le corrige désormais lui-même : vérifiez que vous avez bien la dernière version.
+
 ### Étape 3 : redémarrer GSAS-II
 
 ## Utilisation
