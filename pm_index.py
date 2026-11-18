@@ -270,6 +270,10 @@ def scan_cod(root):
     return out
 
 
+def _eta(sec):
+    return "%.0f min" % (sec / 60) if sec < 5400 else "%.1f h" % (sec / 3600) if sec < 172800 else "%.1f jours" % (sec / 86400)
+
+
 def build_cod(con, root, workers, limit=None, rebuild=False):
     root = cod_dir(con, root)
     if not os.path.isdir(root):
@@ -295,7 +299,11 @@ def build_cod(con, root, workers, limit=None, rebuild=False):
     con.commit()
     if not todo:
         return 0
-    t0 = time.time()
+    import random
+    random.Random(0).shuffle(todo)     # ordre mélangé : la vitesse affichée est représentative dès le début
+    workers = workers if len(todo) > 50 else 1
+    print("[COD] %d processus en parallèle (%d cœurs) ; avancement affiché toutes les 30 s"
+          % (workers, os.cpu_count() or 1), flush=True)
     done, batch = 0, []
     if workers > 1 and len(todo) > 50:
         import multiprocessing as mp
@@ -303,15 +311,17 @@ def build_cod(con, root, workers, limit=None, rebuild=False):
         it = pool.imap_unordered(_cod_job, todo, chunksize=40)
     else:
         pool, it = None, map(_cod_job, todo)
+    t0 = last = time.time()
     try:
         for rec in it:
             batch.append(rec)
             done += 1
-            if len(batch) >= 1000:
+            if len(batch) >= 1000 or time.time() - last > 30:
                 insert(con, batch)
                 batch = []
-                rate = done / (time.time() - t0)
-                print("   %d/%d  (%.0f/s, reste ~%.0f min)" % (done, len(todo), rate, (len(todo) - done) / rate / 60), flush=True)
+                last = time.time()
+                rate = done / (last - t0)
+                print("   %d/%d  (%.1f/s, reste ~%s)" % (done, len(todo), rate, _eta((len(todo) - done) / rate)), flush=True)
     except KeyboardInterrupt:
         print("\ninterrompu : ce qui est fait est conservé, relancer la même commande pour continuer")
     finally:
