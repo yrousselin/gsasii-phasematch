@@ -22,6 +22,8 @@ for _v in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "VECLIB
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import faulthandler
+faulthandler.enable()      # en cas de plantage brutal (aussi dans les processus de calcul), afficher où
 import numpy as np
 import pm_core as pc
 
@@ -312,6 +314,7 @@ def build_cod(con, root, workers, limit=None, rebuild=False):
     else:
         pool, it = None, map(_cod_job, todo)
     t0 = last = time.time()
+    seen = set()
     try:
         for rec in it:
             batch.append(rec)
@@ -321,7 +324,12 @@ def build_cod(con, root, workers, limit=None, rebuild=False):
                 batch = []
                 last = time.time()
                 rate = done / (last - t0)
-                print("   %d/%d  (%.1f/s, reste ~%s)" % (done, len(todo), rate, _eta((len(todo) - done) / rate)), flush=True)
+                msg = ""
+                if pool:
+                    seen.update(w.pid for w in pool._pool)
+                    if len(seen) > workers:
+                        msg = "   ATTENTION : %d processus de calcul ont planté et été relancés" % (len(seen) - workers)
+                print("   %d/%d  (%.1f/s, reste ~%s)%s" % (done, len(todo), rate, _eta((len(todo) - done) / rate), msg), flush=True)
     except KeyboardInterrupt:
         print("\ninterrompu : ce qui est fait est conservé, relancer la même commande pour continuer")
     finally:
