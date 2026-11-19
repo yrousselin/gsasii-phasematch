@@ -53,10 +53,18 @@ COLS = ("source", "ident", "status", "stamp", "name", "formula", "elements", "sg
         "vol", "temp_K", "nlines", "lines", "info", "added")
 
 
+def _writable(path):
+    d = os.path.dirname(os.path.abspath(path)) or "."
+    return os.access(d, os.W_OK) and (not os.path.exists(path) or os.access(path, os.W_OK))
+
+
 def open_db(path):
+    """Ouvre l'index. Un index commun en lecture seule (ex. C:\\ProgramData\\GSASII) est ouvert sans rien y écrire."""
+    if os.path.exists(path) and not _writable(path):
+        import pathlib
+        return sqlite3.connect(pathlib.Path(os.path.abspath(path)).as_uri() + "?mode=ro", uri=True)
     con = sqlite3.connect(path)
     con.executescript(SCHEMA)
-    con.execute("PRAGMA journal_mode=WAL")
     return con
 
 
@@ -779,7 +787,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=("build", "stats", "info", "view", "bench", "cod-sync"))
     ap.add_argument("ident", nargs="?")
-    ap.add_argument("--db", default=os.path.expanduser("~/.GSASII/pm_index.sqlite"))
+    ap.add_argument("--db", default=pc.default_db())
     ap.add_argument("--csd", action="store_true")
     ap.add_argument("--csd-python")
     ap.add_argument("--cif-dir")
@@ -805,6 +813,7 @@ def main():
             print("Étape suivante :  pm_index.py build --cod")
         sys.exit(rc)
     if a.cmd == "build":
+        con.execute("PRAGMA journal_mode=WAL")      # écritures rapides pendant la construction
         if a.cod:
             build_cod(con, a.cod_dir, a.workers, a.limit, a.rebuild)
         if a.cif_dir:
@@ -813,8 +822,12 @@ def main():
             build_csd(con, a.csd_python, a.workers, a.limit, a.rebuild)
         if not (a.cif_dir or a.csd or a.cod):
             sys.exit("donner --csd, --cod et/ou --cif-dir DOSSIER")
+    if a.cmd == "build":
+        con.commit()
+        con.execute("PRAGMA journal_mode=DELETE")   # fichier unique, lisible aussi par les comptes sans droit d'écriture
+        print("Préparation du cache de recherche…", flush=True)
+        load_index(a.db)
     if a.cmd in ("build", "stats"):
-        con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         print("Index %s (%.1f Mo)" % (a.db, os.path.getsize(a.db) / 1e6))
         for src, n, ok, noc, exc in con.execute("SELECT source, COUNT(*), SUM(status='ok'), SUM(status='nocoords'), "
                                                 "SUM(status LIKE 'excluded%') FROM entries GROUP BY source"):

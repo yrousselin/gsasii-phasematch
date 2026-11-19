@@ -3,7 +3,9 @@
 Utilisé par l'index (pm_index.py), le worker CSD (csd_pm_worker.py) et la recherche
 (pm_search.py). Aucune dépendance à GSAS-II ni à l'API du CCDC.
 """
+import os
 import re
+import sys
 import numpy as np
 
 from pm_f0 import F0
@@ -16,6 +18,25 @@ N_STORE = 48             # raies les plus fortes conservées par entrée
 MAX_HKL_STORE = 3000     # réflexions calculées au plus par entrée de l'index (dmin relevé pour les grandes mailles)
 B_OVERALL = 3.0          # Å², agitation thermique globale (Uiso ≈ 0,038)
 CU_KA1 = 1.540598
+
+
+def shared_db_path():
+    """Emplacement commun à tous les utilisateurs de l'ordinateur."""
+    if os.name == "nt":
+        return os.path.join(os.environ.get("ProgramData", r"C:\ProgramData"), "GSASII", "pm_index.sqlite")
+    return "/Users/Shared/GSASII/pm_index.sqlite" if sys.platform == "darwin" else "/usr/local/share/GSASII/pm_index.sqlite"
+
+
+def default_db():
+    """Index utilisé par défaut : variable PM_INDEX_DB, sinon celui de l'utilisateur (~/.GSASII), sinon l'index commun."""
+    env = os.environ.get("PM_INDEX_DB")
+    if env:
+        return os.path.expanduser(env)
+    own = os.path.expanduser("~/.GSASII/pm_index.sqlite")
+    if os.path.exists(own):
+        return own
+    shared = shared_db_path()
+    return shared if os.path.exists(shared) else own
 
 
 def d_to_bin(d):

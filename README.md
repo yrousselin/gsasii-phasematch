@@ -98,6 +98,16 @@ It should end with "0 en erreur" (0 errors). Then delete `test_cod.sqlite`.
 
 **If the build is unusually slow**, or a line "ATTENTION : … processus de calcul ont planté" (worker processes crashed) appears, run the test above: it shows exactly where any crash happens. On Windows, a `0xc06d007f` error in numpy came from the numerical DLLs of the GSAS-II Python, which are not found when `python.exe` is run directly. `pm_index.py` now fixes this itself: make sure you have the latest version.
 
+#### Sharing the index with all users of a computer
+
+By default, each user has their own index in `~/.GSASII`. To keep a single index for everyone:
+- **Windows:** `C:\ProgramData\GSASII\pm_index.sqlite`
+- **macOS:** `/Users/Shared/GSASII/pm_index.sqlite`
+
+The plugin uses, in this order: the `PM_INDEX_DB` environment variable if set, then the personal index `~/.GSASII/pm_index.sqlite` if it exists, then the shared index. Users without write access to the shared index can still use it read-only. Also put the COD copy in a folder everyone can read, for example `C:\ProgramData\GSASII\COD\cif`. Register it once with `build --cod --cod-dir <folder> --db <shared index>`: nothing is recomputed if the files were only moved.
+
+The plugin files still need to be copied into each user's `.GSASII\exports` folder (`install_windows.bat` does this for the user who runs it).
+
 ### Step 3: restart GSAS-II
 
 ## Usage

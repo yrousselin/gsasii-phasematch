@@ -26,7 +26,16 @@ except Exception:
         import GSASIIfiles as G2fil
 import wx
 
-DEFAULT_DB = os.path.expanduser("~/.GSASII/pm_index.sqlite")
+def _default_db():
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import pm_core
+        return pm_core.default_db()
+    except Exception:
+        return os.path.expanduser("~/.GSASII/pm_index.sqlite")
+
+
+DEFAULT_DB = _default_db()
 
 
 def tree_patterns(G2frame):

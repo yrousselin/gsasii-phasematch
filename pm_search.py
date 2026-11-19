@@ -500,7 +500,7 @@ def search(gpx, db, hist=None, max_phases=4, sources=None, elements=None, strict
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("gpx")
-    ap.add_argument("--db", default=os.path.expanduser("~/.GSASII/pm_index.sqlite"))
+    ap.add_argument("--db", default=pc.default_db())
     ap.add_argument("--hist", type=int)
     ap.add_argument("--max-phases", type=int, default=4)
     ap.add_argument("--sources", help="sources à interroger, séparées par des virgules (défaut : toutes)")

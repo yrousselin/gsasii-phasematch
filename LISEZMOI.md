@@ -98,6 +98,16 @@ Il doit se terminer par « 0 en erreur ». Supprimez ensuite `test_cod.sqlite`.
 
 **Si la construction est anormalement lente**, ou si une ligne « ATTENTION : … processus de calcul ont planté » apparaît, relancez l'essai ci-dessus : il affiche l'endroit exact d'un éventuel plantage. Sous Windows, une erreur `0xc06d007f` dans numpy venait des DLL de calcul du Python de GSAS-II, introuvables quand on lance `python.exe` directement. `pm_index.py` le corrige désormais lui-même : vérifiez que vous avez bien la dernière version.
 
+#### Partager l'index avec tous les utilisateurs d'un PC
+
+Par défaut, chaque utilisateur a son propre index dans `~/.GSASII`. Pour n'en garder qu'un seul, commun à tous :
+- **Windows :** `C:\ProgramData\GSASII\pm_index.sqlite`
+- **macOS :** `/Users/Shared/GSASII/pm_index.sqlite`
+
+L'extension utilise, dans cet ordre : la variable d'environnement `PM_INDEX_DB` si elle existe, puis l'index personnel `~/.GSASII/pm_index.sqlite` s'il existe, puis l'index commun. Les utilisateurs sans droit d'écriture sur l'index commun peuvent s'en servir en lecture seule. Placez aussi la copie de la COD dans un dossier lisible par tous, par exemple `C:\ProgramData\GSASII\COD\cif`. Indiquez-la une fois avec `build --cod --cod-dir <dossier> --db <index commun>` : rien n'est recalculé si les fichiers ont seulement été déplacés.
+
+Les fichiers de l'extension, eux, restent à copier dans le dossier `.GSASII\exports` de chaque utilisateur (`install_windows.bat` le fait pour l'utilisateur qui le lance).
+
 ### Étape 3 : redémarrer GSAS-II
 
 ## Utilisation
